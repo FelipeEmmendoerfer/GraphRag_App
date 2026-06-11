@@ -1,0 +1,52 @@
+# GraphRAG Configuration
+# For detailed documentation, see: https://microsoft.github.io/graphrag/
+
+llm:
+  api_key: ${OPENAI_API_KEY}  # or use local Ollama
+  type: ollama  # Change to 'openai' for OpenAI
+  model: qwen2:8b
+  max_tokens: 1500
+
+embeddings:
+  type: ollama
+  model: nomic-embed-text
+  batch_size: 200
+  chunk_overlap: 20
+
+chunks:
+  size: 1200
+  overlap: 100
+
+entity_extraction:
+  prompt: prompts/extract_graph.txt
+  entity_types: [person, location, organization, event, concept]
+
+relationships:
+  prompt: prompts/extract_graph.txt
+  
+summarize:
+  prompt: prompts/summarize_descriptions.txt
+  
+claim_extraction:
+  prompt: prompts/extract_claims.txt
+
+community_reports:
+  prompt: prompts/community_report_text.txt
+  max_length: 2000
+
+search:
+  top_k: 10
+  method: local  # Options: local, global, drift, basic
+
+input:
+  base_dir: input
+  file_type: txt
+
+output:
+  base_dir: output
+  report_type: markdown
+
+# Parallel processing
+parallelization:
+  stagger: 0.3
+  num_threads: 4
