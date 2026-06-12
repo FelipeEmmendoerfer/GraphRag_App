@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 import json
 import logging
 from pathlib import Path
@@ -6,95 +7,158 @@ from pathlib import Path
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class GraphVisualizer:
 
-    def __init__(self, output_dir="./output"):
+    def __init__(self, output_dir="./ragtest/output"):
         self.output_dir = Path(output_dir)
-        # GraphRAG 3.x salva parquet direto em output/ ou output/artifacts/
-        # Busca nos dois locais
-        self.artifacts_path = self.output_dir
-    
+
     def extract_graph_data(self):
 
         try:
 
-            if not self.artifacts_path.exists():
+            if not self.output_dir.exists():
                 logger.warning(
-                    f"Output path not found: {self.artifacts_path}"
+                    f"Output path not found: {self.output_dir}"
                 )
-                return {}
+                return {
+                    "nodes": [],
+                    "edges": [],
+                    "stats": {}
+                }
 
-            entities_file = self.artifacts_path / "entities.parquet"
-            relationships_file = self.artifacts_path / "relationships.parquet"
+            entities_file = None
+            relationships_file = None
 
-            if not entities_file.exists():
-                logger.warning("entities.parquet não encontrado")
-                return {}
+            for root, dirs, files in os.walk(self.output_dir):
 
-            if not relationships_file.exists():
-                logger.warning("relationships.parquet não encontrado")
-                return {}
+                for file in files:
+
+                    name = file.lower()
+
+                    if (
+                        "entities" in name
+                        and name.endswith(".parquet")
+                    ):
+                        entities_file = os.path.join(root, file)
+
+                    elif (
+                        "relationships" in name
+                        and name.endswith(".parquet")
+                    ):
+                        relationships_file = os.path.join(root, file)
+
+            if entities_file is None:
+                logger.warning(
+                    "entities.parquet não encontrado"
+                )
+                return {
+                    "nodes": [],
+                    "edges": [],
+                    "stats": {}
+                }
+
+            if relationships_file is None:
+                logger.warning(
+                    "relationships.parquet não encontrado"
+                )
+                return {
+                    "nodes": [],
+                    "edges": [],
+                    "stats": {}
+                }
+
+            logger.info(f"Entities: {entities_file}")
+            logger.info(f"Relationships: {relationships_file}")
 
             df_entities = pd.read_parquet(entities_file)
-            df_relationships = pd.read_parquet(relationships_file)
+            df_relationships = pd.read_parquet(
+                relationships_file
+            )
 
             nodes = []
 
             for _, row in df_entities.iterrows():
 
-                label = str(
+                node_id = str(
                     row.get(
-                        "title",
-                        row.get("name", row.get("id", ""))
+                        "id",
+                        row.get(
+                            "title",
+                            row.get("name", "")
+                        )
                     )
                 )
 
-                nodes.append({
-                    "id": str(row.get("id", label)),
-                    "label": label,
-                    "description": str(
-                        row.get("description", "")
-                    )[:200],
-                    "size": 15
-                })
+                label = str(
+                    row.get(
+                        "title",
+                        row.get(
+                            "name",
+                            node_id
+                        )
+                    )
+                )
+
+                nodes.append(
+                    {
+                        "id": node_id,
+                        "label": label,
+                        "size": 20
+                    }
+                )
 
             edges = []
 
             for _, row in df_relationships.iterrows():
 
-                edges.append({
-                    "source": str(
-                        row.get("source", "")
-                    ),
-                    "target": str(
-                        row.get("target", "")
-                    ),
-                    "label": str(
-                        row.get("description", "")
-                    ),
-                    "weight": float(
-                        row.get("weight", 1)
+                source = str(
+                    row.get("source", "")
+                )
+
+                target = str(
+                    row.get("target", "")
+                )
+
+                if source and target:
+
+                    edges.append(
+                        {
+                            "source": source,
+                            "target": target,
+                            "weight": float(
+                                row.get(
+                                    "weight",
+                                    1
+                                )
+                            )
+                        }
                     )
-                })
 
             stats = {
-
                 "total_entities": len(nodes),
-
                 "total_relationships": len(edges),
-
                 "communities":
-                    int(df_entities["community"].nunique())
+                    int(
+                        df_entities["community"].nunique()
+                    )
                     if "community" in df_entities.columns
                     else 0,
-
                 "avg_degree":
                     round(
-                        len(edges) /
-                        max(len(nodes), 1),
+                        (2 * len(edges))
+                        / max(len(nodes), 1),
                         2
                     )
             }
+
+            logger.info(
+                f"{len(nodes)} entidades carregadas"
+            )
+
+            logger.info(
+                f"{len(edges)} relacionamentos carregados"
+            )
 
             return {
                 "nodes": nodes,
@@ -116,46 +180,37 @@ class GraphVisualizer:
 
         data = self.extract_graph_data()
 
-        if not data.get("nodes"):
+        if not data["nodes"]:
+            return "Nenhum grafo encontrado."
 
-            return (
-                "📊 Nenhum gráfico disponível.\n"
-                "Execute uma indexação primeiro."
-            )
-
-        stats = data["stats"]
+        s = data["stats"]
 
         return (
-            f"📊 **Resumo do Grafo**\n\n"
-            f"🔗 Entidades: {stats['total_entities']}\n\n"
-            f"🎯 Relacionamentos: {stats['total_relationships']}\n\n"
-            f"👥 Comunidades: {stats['communities']}\n\n"
-            f"📈 Grau Médio: {stats['avg_degree']}"
+            f"Entidades: {s['total_entities']} | "
+            f"Relacionamentos: {s['total_relationships']} | "
+            f"Comunidades: {s['communities']}"
         )
 
     def get_top_entities(self, n=10):
 
         data = self.extract_graph_data()
 
-        edges = data.get("edges", [])
+        degree = {}
 
-        degree_count = {}
+        for edge in data["edges"]:
 
-        for edge in edges:
-
-            source = edge["source"]
-            target = edge["target"]
-
-            degree_count[source] = (
-                degree_count.get(source, 0) + 1
+            degree[edge["source"]] = (
+                degree.get(edge["source"], 0)
+                + 1
             )
 
-            degree_count[target] = (
-                degree_count.get(target, 0) + 1
+            degree[edge["target"]] = (
+                degree.get(edge["target"], 0)
+                + 1
             )
 
         return sorted(
-            degree_count.items(),
+            degree.items(),
             key=lambda x: x[1],
             reverse=True
         )[:n]

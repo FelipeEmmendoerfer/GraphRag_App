@@ -39,7 +39,7 @@ class QueryEngine:
                 }
 
   
-            cmd = [python_exe, "-m", "graphrag", "query", "--root", ".", "--method", method, "--query", text]
+            cmd = [python_exe, "-m", "graphrag", "query", "--root", "ragtest", "--method", method, text]
 
             logger.info(f"Running query: {text}")
 

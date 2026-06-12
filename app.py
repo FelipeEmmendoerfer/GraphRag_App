@@ -150,7 +150,7 @@ with tab2:
         with st.spinner("Buscando resposta..."):
             try:
                 # Verificar se index existe
-                if not list(Path("./output").rglob("*.parquet")):
+                if not list(Path("./ragtest/output").rglob("*.parquet")):
                     st.warning("⚠️ Nenhum índice encontrado. Primeiro indexe os documentos em '⚙️ Configuração'")
                 else:
                     result = st.session_state.engine.query(user_query, method=search_method)
@@ -197,7 +197,7 @@ with tab3:
     except:
         num_files = 0
     
-    index_exists = bool(list(Path("./output").rglob("*.parquet")))
+    index_exists = bool(list(Path("./ragtest/output").rglob("*.parquet")))
     col1.metric("🟢 Status", "Indexado" if index_exists else "Sem índice")
     col2.metric("📄 Documentos", num_files)
     col3.metric("💬 Conversas", len(st.session_state.chat_history))

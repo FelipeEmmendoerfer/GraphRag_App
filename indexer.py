@@ -69,7 +69,7 @@ class DocumentIndexManager:
             os.environ['GRAPHRAG_LLM_API_BASE'] = 'http://localhost:11434/v1'
             
             # Run indexing via CLI
-            cmd = [python_exe, "-m", "graphrag", "index", "--root", "."]
+            cmd = [python_exe, "-m", "graphrag", "index", "--root", "ragtest"]
             logger.info(f"Running: {' '.join(cmd)}")
             
             result = subprocess.run(
@@ -83,8 +83,7 @@ class DocumentIndexManager:
             if result.stdout:
                 logger.info(f"Output: {result.stdout[:500]}")
             if result.stderr:
-                logger.warning(f"Stderr: {result.stderr[:500]}")
-            
+                logger.warning(result.stderr)
             if result.returncode != 0:
                 logger.error(f"Indexing failed with code {result.returncode}")
                 return False
