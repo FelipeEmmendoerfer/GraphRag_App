@@ -90,9 +90,8 @@ class DocumentIndexManager:
                 return False
             
             # Verify output was created
-            output_dir = Path("./output")
-            if output_dir.exists():
-                logger.info(f"✅ Index created at {output_dir}")
+            if list(Path("./output").rglob("*.parquet")):
+                logger.info("✅ Index criado com sucesso")
                 # Update cache
                 cache = {str(f): self._get_file_hash(f) for f in self.input_dir.glob("*") if f.is_file()}
                 self.cache_file.write_text(json.dumps(cache))

@@ -165,10 +165,7 @@ with tab2:
                             "timestamp": datetime.now().strftime("%H:%M:%S"), 
                             "context": result.get("context", None)
                         })
-                        st.success("✅ Resposta encontrada!")
-            # rerun fora do spinner:          
-                    if search_button and user_query and st.session_state.chat_history:
-                        st.rerun()
+                        st.success("✅ Resposta encontrada!")        
             except Exception as e:
                 st.error(f"❌ Erro na busca: {str(e)}")
                 st.error(f"Certifique-se de:")
@@ -190,7 +187,7 @@ with tab2:
                 if chat.get('context'):
                     with st.expander("📚 Contexto Recuperado"):
                         st.write(chat['context'])
-
+    st.rerun()
 with tab3:
     st.header("Dashboard de Status")
     col1, col2, col3, col4 = st.columns(4)

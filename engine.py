@@ -31,18 +31,14 @@ class QueryEngine:
 
             output_dir = Path("./output")
 
-            required_files = [
-                output_dir / "entities.parquet",
-                output_dir / "relationships.parquet"
-            ]
+            parquet_files = list(output_dir.rglob("*.parquet"))
+            if not parquet_files:
+                return {
+                    "response": "❌ Índice não encontrado. Execute a indexação primeiro.",
+                    "context": ""
+                }
 
-            for file in required_files:
-                if not file.exists():
-                    return {
-                        "response": f"❌ Arquivo não encontrado: {file.name}",
-                        "context": ""
-                    }
-
+  
             cmd = [python_exe, "-m", "graphrag", "query", "--root", ".", "--method", method, "--query", text]
 
             logger.info(f"Running query: {text}")

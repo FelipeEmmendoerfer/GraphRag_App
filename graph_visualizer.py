@@ -18,14 +18,14 @@ class GraphVisualizer:
 
         try:
 
-            if not self.data_path.exists():
+            if not self.artifacts_path.exists():
                 logger.warning(
-                    f"Output path not found: {self.data_path}"
+                    f"Output path not found: {self.artifacts_path}"
                 )
                 return {}
 
-            entities_file = self.data_path / "entities.parquet"
-            relationships_file = self.data_path / "relationships.parquet"
+            entities_file = self.artifacts_path / "entities.parquet"
+            relationships_file = self.artifacts_path / "relationships.parquet"
 
             if not entities_file.exists():
                 logger.warning("entities.parquet não encontrado")
