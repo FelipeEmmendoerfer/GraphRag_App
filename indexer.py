@@ -64,9 +64,9 @@ class DocumentIndexManager:
             
             # Set up environment variables
             import os
-            os.environ['GRAPHRAG_LLM_MODEL'] = 'qwen2:8b'
+            os.environ['GRAPHRAG_LLM_MODEL'] = 'qwen3:8b'
             os.environ['GRAPHRAG_EMBEDDINGS_MODEL'] = 'nomic-embed-text'
-            os.environ['GRAPHRAG_LLM_API_BASE'] = 'http://localhost:11434'
+            os.environ['GRAPHRAG_LLM_API_BASE'] = 'http://localhost:11434/v1'
             
             # Run indexing via CLI
             cmd = [python_exe, "-m", "graphrag", "index", "--root", "."]

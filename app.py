@@ -8,7 +8,46 @@ from datetime import datetime
 import json
 
 st.set_page_config(page_title="GraphRAG Interface", layout="wide")
+st.markdown("""
+<style>
+/* Abas com destaque visual */
+.stTabs [data-baseweb="tab"] {
+    font-size: 15px;
+    padding: 8px 20px;
+    color: #888;
+}
+.stTabs [aria-selected="true"] {
+    color: #4f8ef7 !important;
+    border-bottom: 3px solid #4f8ef7 !important;
+    font-weight: 600;
+}
 
+/* Botões com hover */
+.stButton > button {
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+.stButton > button:hover {
+    border-color: #4f8ef7;
+    color: #4f8ef7;
+}
+
+/* Cards do chat com espaçamento */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    border-radius: 10px !important;
+    padding: 4px 8px !important;
+}
+
+/* Métricas com fundo */
+[data-testid="metric-container"] {
+    background: #1e1e2e;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 10px;
+}
+</style>
+""", unsafe_allow_html=True)
 # Initialize session state
 if 'manager' not in st.session_state:
     st.session_state.manager = DocumentIndexManager(input_dir="input")
@@ -82,7 +121,7 @@ with tab1:
                             st.error("❌ Erro durante indexação. Verifique:")
                             st.error("1. Se há arquivos em input/")
                             st.error("2. Se o Ollama está rodando (localhost:11434)")
-                            st.error("3. Se os modelos estão baixados (ollama pull qwen2:8b)")
+                            st.error("3. Se os modelos estão baixados (ollama pull qwen3:8b)")
                 except Exception as e:
                     st.error(f"❌ Erro: {str(e)}")
                     st.error(f"Detalhes: {type(e).__name__}")
@@ -111,12 +150,12 @@ with tab2:
         with st.spinner("Buscando resposta..."):
             try:
                 # Verificar se index existe
-                if not Path("./output").exists() or not list(Path("./output").glob("*")):
+                if not list(Path("./output").rglob("*.parquet")):
                     st.warning("⚠️ Nenhum índice encontrado. Primeiro indexe os documentos em '⚙️ Configuração'")
                 else:
                     result = st.session_state.engine.query(user_query, method=search_method)
                     
-                    if "Error" in result.get("response", ""):
+                    if result.get("response", "").startswith("❌"):
                         st.error(f"❌ Erro na busca: {result['response']}")
                     else:
                         st.session_state.chat_history.append({
@@ -127,6 +166,8 @@ with tab2:
                             "context": result.get("context", None)
                         })
                         st.success("✅ Resposta encontrada!")
+            # rerun fora do spinner:          
+                    if search_button and user_query and st.session_state.chat_history:
                         st.rerun()
             except Exception as e:
                 st.error(f"❌ Erro na busca: {str(e)}")
@@ -140,9 +181,12 @@ with tab2:
         st.markdown("---")
         for chat in reversed(st.session_state.chat_history):
             with st.container(border=True):
-                st.write(f"**Q:** {chat['query']}")
-                st.write(f"**A:** {chat['response']}")
-                st.caption(f"Método: {chat['method']} | Hora: {chat['timestamp']}")
+                st.markdown(f"🧑 **{chat['query']}**")
+                st.divider()
+                st.markdown(chat['response'])
+                c1, c2 = st.columns([1, 1])
+                c1.caption(f"🔍 `{chat['method']}`")
+                c2.caption(f"🕐 {chat['timestamp']}")
                 if chat.get('context'):
                     with st.expander("📚 Contexto Recuperado"):
                         st.write(chat['context'])
@@ -156,11 +200,11 @@ with tab3:
     except:
         num_files = 0
     
-    col1.metric("Status", "Pronto")
-    col2.metric("Documentos", num_files)
-    col3.metric("Conversas", len(st.session_state.chat_history))
-    col4.metric("Versão", "3.0.1")
-
+    index_exists = bool(list(Path("./output").rglob("*.parquet")))
+    col1.metric("🟢 Status", "Indexado" if index_exists else "Sem índice")
+    col2.metric("📄 Documentos", num_files)
+    col3.metric("💬 Conversas", len(st.session_state.chat_history))
+    col4.metric("🔖 Versão", "3.0.1")
 with tab4:
     st.header("🌐 Visualização do Gráfo de Conhecimento")
     
