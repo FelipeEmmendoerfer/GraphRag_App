@@ -7,6 +7,7 @@ from engine import QueryEngine
 from graph_visualizer import GraphVisualizer
 from datetime import datetime
 import json
+import streamlit.components.v1 as components
 
 # ─── Page Configuration ───────────────────────────────────────────────────────
 st.set_page_config(
@@ -102,6 +103,14 @@ h1, h2, h3, h4, h5, h6, p, span, div, label {
     transform: translateY(-2px);
 }
 
+[data-testid="stMetricLabel"] {
+    color: #a0aec0 !important;
+}
+
+[data-testid="stMetricValue"] {
+    color: #e2e8f0 !important;
+}
+
 /* ===== CONTAINERS / CARDS ===== */
 [data-testid="stVerticalBlockBorderWrapper"] {
     border-radius: 12px !important;
@@ -110,10 +119,6 @@ h1, h2, h3, h4, h5, h6, p, span, div, label {
 }
 
 /* ===== FILE UPLOADER ===== */
-[data-testid="stFileUploader"] {
-    border-radius: 12px;
-}
-
 [data-testid="stFileUploader"] > div {
     border-radius: 12px;
     border: 2px dashed rgba(102, 126, 234, 0.3);
@@ -139,35 +144,25 @@ h1, h2, h3, h4, h5, h6, p, span, div, label {
     background: rgba(255, 255, 255, 0.03);
 }
 
-/* ===== EXPANDER ===== */
-.streamlit-expanderHeader {
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.03);
-}
-
 /* ===== DIVIDER ===== */
 hr {
     border-color: rgba(102, 126, 234, 0.15) !important;
 }
 
-/* ===== SUCCESS/ERROR/WARNING/INFO MESSAGES ===== */
-.stAlert {
-    border-radius: 10px;
-}
-
-/* ===== DATAFRAME ===== */
+/* ===== DATAFRAME - fix white background ===== */
 [data-testid="stDataFrame"] {
     border-radius: 10px;
     overflow: hidden;
 }
 
-/* ===== CHAT MESSAGES ===== */
-.chat-message {
-    background: linear-gradient(135deg, rgba(30, 30, 60, 0.6) 0%, rgba(40, 40, 80, 0.4) 100%);
-    border: 1px solid rgba(102, 126, 234, 0.1);
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 12px;
+[data-testid="stDataFrame"] iframe {
+    border-radius: 10px;
+}
+
+/* ===== CHARTS - fix white background ===== */
+[data-testid="stVegaLiteChart"] {
+    background: transparent !important;
+    border-radius: 10px;
 }
 
 /* ===== SCROLLBAR ===== */
@@ -209,33 +204,6 @@ hr {
     font-size: 1rem;
     font-weight: 300;
 }
-
-/* ===== FILE LIST ITEM ===== */
-.file-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 8px;
-    margin-bottom: 6px;
-    transition: all 0.2s ease;
-}
-
-.file-item:hover {
-    border-color: rgba(102, 126, 234, 0.3);
-    background: rgba(102, 126, 234, 0.05);
-}
-
-/* ===== GRAPH STATS CARD ===== */
-.stats-card {
-    background: linear-gradient(135deg, rgba(30, 30, 60, 0.8) 0%, rgba(40, 40, 80, 0.6) 100%);
-    border: 1px solid rgba(102, 126, 234, 0.15);
-    border-radius: 14px;
-    padding: 20px;
-    margin: 8px 0;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -252,7 +220,7 @@ if 'visualizer' not in st.session_state:
 # ─── Header ───────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="main-header">
-    <h1>🧠 GraphRAG Interface</h1>
+    <h1>GraphRAG Interface</h1>
     <p>Sistema de Recuperação Aumentada por Grafos de Conhecimento</p>
 </div>
 """, unsafe_allow_html=True)
@@ -337,7 +305,6 @@ with tab1:
                         if success:
                             st.success("✅ Indexação concluída com sucesso!")
                             st.balloons()
-                            st.info("💡 Agora você pode fazer buscas na aba 'Chat'")
                         else:
                             st.error("❌ Erro durante indexação. Verifique:")
                             st.markdown("""
@@ -360,7 +327,7 @@ with tab1:
         status = st.session_state.manager.get_status()
         if "atualizado" in status.lower():
             st.success(f"🟢 {status}")
-        elif "alterações" in status.lower():
+        elif "alterações" in status.lower() or "re-indexação" in status.lower():
             st.warning(f"🟡 {status}")
         else:
             st.info(f"🔵 {status}")
@@ -464,17 +431,17 @@ with tab3:
     
     with col1:
         st.metric(
-            "🟢 Status do Índice",
+            "Status do Índice",
             "Indexado" if index_exists else "Sem índice",
             delta="Pronto" if index_exists else "Pendente",
             delta_color="normal" if index_exists else "off"
         )
     with col2:
-        st.metric("📄 Documentos", num_files)
+        st.metric("Documentos", num_files)
     with col3:
-        st.metric("💬 Conversas", len(st.session_state.chat_history))
+        st.metric("Conversas", len(st.session_state.chat_history))
     with col4:
-        st.metric("🔖 Versão", "3.1.0")
+        st.metric("Versão", "3.2.0")
     
     st.markdown("---")
     
@@ -500,12 +467,10 @@ with tab3:
     with col_detail2:
         st.subheader("🔧 Estado do Sistema")
         
-        # Check index files
         if index_exists:
             parquet_files = list(output_dir.rglob("*.parquet"))
             st.success(f"✅ Índice ativo com {len(parquet_files)} arquivo(s) parquet")
             
-            # Show parquet file details
             parquet_info = []
             for pf in parquet_files[:10]:
                 size_kb = pf.stat().st_size / 1024
@@ -518,10 +483,9 @@ with tab3:
         else:
             st.warning("⚠️ Nenhum índice encontrado. Execute a indexação na aba Configuração.")
         
-        # System info
         st.markdown("---")
         st.caption("ℹ️ Informações do Sistema")
-        st.markdown(f"""
+        st.markdown("""
         - **Motor:** GraphRAG 3.0+
         - **LLM:** Ollama (qwen3:8b)
         - **Embeddings:** nomic-embed-text
@@ -536,86 +500,275 @@ with tab4:
     st.header("🌐 Visualização do Grafo de Conhecimento")
     st.caption("Explore as entidades e relacionamentos extraídos dos seus documentos.")
     
-    # Refresh button
-    col_refresh, col_spacer2 = st.columns([1, 3])
-    with col_refresh:
-        if st.button("🔄 Atualizar Grafo", use_container_width=True):
-            st.session_state.visualizer = GraphVisualizer()
-            st.rerun()
-    
-    # Check if index exists (corrigido: usar ragtest/output)
+    # Check if index exists
     output_dir = Path("./ragtest/output")
     if not output_dir.exists() or not list(output_dir.rglob("*.parquet")):
         st.warning("⚠️ Nenhum índice encontrado. Indexe documentos em '⚙️ Configuração' primeiro.")
-        st.info("💡 Após a indexação, o grafo de conhecimento será gerado automaticamente a partir das entidades e relacionamentos extraídos.")
+        st.info("💡 Após a indexação, o grafo de conhecimento será gerado automaticamente.")
     else:
         # Get graph data
         graph_data = st.session_state.visualizer.extract_graph_data()
         
         if not graph_data or not graph_data.get("nodes"):
-            st.info("📊 Nenhum dado de grafo encontrado nos arquivos de saída. Verifique se a indexação foi concluída corretamente.")
+            st.info("📊 Nenhum dado de grafo encontrado. Verifique se a indexação foi concluída corretamente.")
         else:
             # Summary metrics
             stats = graph_data.get("stats", {})
             col_g1, col_g2, col_g3, col_g4 = st.columns(4)
             with col_g1:
-                st.metric("🔵 Entidades", stats.get('total_entities', 0))
+                st.metric("Entidades", stats.get('total_entities', 0))
             with col_g2:
-                st.metric("🔗 Relacionamentos", stats.get('total_relationships', 0))
+                st.metric("Relacionamentos", stats.get('total_relationships', 0))
             with col_g3:
-                st.metric("🏘️ Comunidades", stats.get('communities', 0))
+                st.metric("Comunidades", stats.get('communities', 0))
             with col_g4:
-                st.metric("📐 Grau Médio", f"{stats.get('avg_degree', 0):.2f}")
+                st.metric("Grau Médio", f"{stats.get('avg_degree', 0):.2f}")
             
             st.markdown("---")
             
-            # Display in columns
-            col_left, col_right = st.columns([1, 1], gap="large")
+            # ─── VISUALIZAÇÃO INTERATIVA DO GRAFO (ESTILO GEPHI) ──────────────
+            st.subheader("🔮 Visualização Interativa do Grafo")
             
-            with col_left:
-                st.subheader("🏆 Principais Entidades")
-                top_entities = st.session_state.visualizer.get_top_entities(n=15)
-                if top_entities:
-                    entity_df = pd.DataFrame(top_entities, columns=["Entidade", "Conexões"])
-                    st.bar_chart(entity_df.set_index("Entidade"), height=400)
+            # Controls for the graph
+            col_ctrl1, col_ctrl2, col_ctrl3 = st.columns(3)
+            with col_ctrl1:
+                physics_enabled = st.checkbox("Física (Force Atlas)", value=True, help="Ativar simulação de forças estilo Gephi")
+            with col_ctrl2:
+                show_labels = st.checkbox("Mostrar Labels", value=True)
+            with col_ctrl3:
+                graph_height = st.selectbox("Altura do Grafo", [500, 600, 700, 800, 900], index=2)
+            
+            # Build interactive graph with pyvis
+            try:
+                from pyvis.network import Network
+                import networkx as nx
+                
+                # Create NetworkX graph first for layout
+                G = nx.Graph()
+                
+                # Add nodes
+                for node in graph_data["nodes"]:
+                    G.add_node(node["id"], label=node["label"], title=node.get("description", ""))
+                
+                # Add edges
+                for edge in graph_data["edges"]:
+                    G.add_edge(edge["source"], edge["target"], 
+                              weight=edge.get("weight", 1),
+                              title=edge.get("relationship", ""))
+                
+                # Create Pyvis network
+                net = Network(
+                    height=f"{graph_height}px",
+                    width="100%",
+                    bgcolor="#0f0f1a",
+                    font_color="#e2e8f0",
+                    directed=False
+                )
+                
+                # Configure physics (Force Atlas 2 style - like Gephi)
+                if physics_enabled:
+                    net.set_options("""
+                    {
+                        "physics": {
+                            "enabled": true,
+                            "forceAtlas2Based": {
+                                "gravitationalConstant": -80,
+                                "centralGravity": 0.01,
+                                "springLength": 120,
+                                "springConstant": 0.08,
+                                "damping": 0.4,
+                                "avoidOverlap": 0.8
+                            },
+                            "solver": "forceAtlas2Based",
+                            "stabilization": {
+                                "enabled": true,
+                                "iterations": 200,
+                                "updateInterval": 25
+                            }
+                        },
+                        "nodes": {
+                            "font": {
+                                "size": 12,
+                                "color": "#e2e8f0",
+                                "face": "Inter, sans-serif"
+                            },
+                            "borderWidth": 2,
+                            "borderWidthSelected": 4,
+                            "shadow": {
+                                "enabled": true,
+                                "color": "rgba(102, 126, 234, 0.3)",
+                                "size": 10
+                            }
+                        },
+                        "edges": {
+                            "color": {
+                                "color": "rgba(102, 126, 234, 0.4)",
+                                "highlight": "#667eea",
+                                "hover": "#764ba2"
+                            },
+                            "smooth": {
+                                "enabled": true,
+                                "type": "continuous"
+                            },
+                            "width": 1.5
+                        },
+                        "interaction": {
+                            "hover": true,
+                            "tooltipDelay": 200,
+                            "navigationButtons": true,
+                            "keyboard": {
+                                "enabled": true
+                            },
+                            "zoomView": true,
+                            "dragView": true
+                        }
+                    }
+                    """)
                 else:
-                    st.info("Sem dados de entidades")
-            
-            with col_right:
-                st.subheader("📊 Distribuição de Conexões")
-                if graph_data.get("edges"):
-                    # Calculate degree distribution
-                    degree = {}
-                    for edge in graph_data["edges"]:
-                        degree[edge["source"]] = degree.get(edge["source"], 0) + 1
-                        degree[edge["target"]] = degree.get(edge["target"], 0) + 1
+                    net.set_options("""
+                    {
+                        "physics": {
+                            "enabled": false
+                        },
+                        "nodes": {
+                            "font": {
+                                "size": 12,
+                                "color": "#e2e8f0",
+                                "face": "Inter, sans-serif"
+                            },
+                            "borderWidth": 2,
+                            "shadow": {
+                                "enabled": true,
+                                "color": "rgba(102, 126, 234, 0.3)",
+                                "size": 10
+                            }
+                        },
+                        "edges": {
+                            "color": {
+                                "color": "rgba(102, 126, 234, 0.4)",
+                                "highlight": "#667eea",
+                                "hover": "#764ba2"
+                            },
+                            "smooth": {
+                                "enabled": true,
+                                "type": "continuous"
+                            },
+                            "width": 1.5
+                        },
+                        "interaction": {
+                            "hover": true,
+                            "tooltipDelay": 200,
+                            "navigationButtons": true,
+                            "keyboard": {
+                                "enabled": true
+                            }
+                        }
+                    }
+                    """)
+                
+                # Calculate degree for node sizing
+                degree_dict = dict(G.degree())
+                max_degree = max(degree_dict.values()) if degree_dict else 1
+                
+                # Color palette (Gephi-style community colors)
+                colors = [
+                    "#667eea", "#764ba2", "#f093fb", "#4fd1c5", "#f6ad55",
+                    "#fc8181", "#68d391", "#63b3ed", "#b794f4", "#fbb6ce",
+                    "#9ae6b4", "#fbd38d", "#bee3f8", "#c4b5fd", "#a3e635"
+                ]
+                
+                # Add nodes with size based on degree
+                for node in graph_data["nodes"]:
+                    node_id = node["id"]
+                    degree = degree_dict.get(node_id, 1)
+                    size = 10 + (degree / max_degree) * 40  # Scale between 10 and 50
                     
-                    degree_values = list(degree.values())
-                    if degree_values:
-                        degree_df = pd.DataFrame({"Grau": degree_values})
-                        st.bar_chart(degree_df["Grau"].value_counts().sort_index(), height=400)
-                else:
-                    st.info("Sem dados de arestas")
+                    # Assign color based on type or hash
+                    color_idx = hash(node.get("type", node_id)) % len(colors)
+                    color = colors[color_idx]
+                    
+                    tooltip = f"<b>{node['label']}</b><br>"
+                    tooltip += f"Tipo: {node.get('type', 'N/A')}<br>"
+                    tooltip += f"Conexões: {degree}<br>"
+                    if node.get("description"):
+                        tooltip += f"<br>{node['description']}"
+                    
+                    net.add_node(
+                        node_id,
+                        label=node["label"] if show_labels else "",
+                        size=size,
+                        color={
+                            "background": color,
+                            "border": color,
+                            "highlight": {"background": "#ffffff", "border": color}
+                        },
+                        title=tooltip,
+                        font={"size": max(8, int(8 + degree * 2)), "color": "#e2e8f0"}
+                    )
+                
+                # Add edges
+                for edge in graph_data["edges"]:
+                    tooltip = edge.get("relationship", "")
+                    weight = edge.get("weight", 1)
+                    net.add_edge(
+                        edge["source"],
+                        edge["target"],
+                        title=tooltip,
+                        width=min(1 + weight * 0.5, 5)
+                    )
+                
+                # Generate HTML
+                html_path = Path("graph_viz.html")
+                net.save_graph(str(html_path))
+                
+                # Read and display the HTML
+                with open(html_path, "r", encoding="utf-8") as f:
+                    html_content = f.read()
+                
+                # Embed in Streamlit
+                components.html(html_content, height=graph_height + 50, scrolling=False)
+                
+                st.caption(f"🖱️ Arraste nós para reorganizar | Scroll para zoom | Clique para selecionar | Hover para detalhes")
+                
+            except ImportError:
+                st.error("❌ Biblioteca pyvis não encontrada. Instale com: `pip install pyvis networkx`")
+            except Exception as e:
+                st.error(f"❌ Erro ao gerar visualização: {str(e)}")
+                import traceback
+                st.code(traceback.format_exc())
             
             st.markdown("---")
             
-            # Data tables
+            # ─── TABELAS DE DADOS ─────────────────────────────────────────────
             st.subheader("📋 Dados do Grafo")
             
             data_tab1, data_tab2 = st.tabs(["🔵 Entidades (Nós)", "🔗 Relacionamentos (Arestas)"])
             
             with data_tab1:
                 if graph_data.get("nodes"):
-                    nodes_df = pd.DataFrame(graph_data["nodes"][:50])
-                    st.dataframe(nodes_df, use_container_width=True, hide_index=True)
+                    nodes_display = []
+                    for node in graph_data["nodes"][:50]:
+                        nodes_display.append({
+                            "Entidade": node["label"],
+                            "Tipo": node.get("type", "N/A"),
+                            "Descrição": node.get("description", "")[:100]
+                        })
+                    st.dataframe(pd.DataFrame(nodes_display), use_container_width=True, hide_index=True)
                     st.caption(f"Exibindo {min(50, len(graph_data['nodes']))} de {len(graph_data['nodes'])} entidades")
                 else:
                     st.info("Sem dados de nós")
             
             with data_tab2:
                 if graph_data.get("edges"):
-                    edges_df = pd.DataFrame(graph_data["edges"][:50])
-                    st.dataframe(edges_df, use_container_width=True, hide_index=True)
+                    edges_display = []
+                    for edge in graph_data["edges"][:50]:
+                        edges_display.append({
+                            "Origem": edge["source"],
+                            "Destino": edge["target"],
+                            "Relação": edge.get("relationship", "N/A"),
+                            "Peso": edge.get("weight", 1)
+                        })
+                    st.dataframe(pd.DataFrame(edges_display), use_container_width=True, hide_index=True)
                     st.caption(f"Exibindo {min(50, len(graph_data['edges']))} de {len(graph_data['edges'])} relacionamentos")
                 else:
                     st.info("Sem dados de arestas")
@@ -623,8 +776,8 @@ with tab4:
 # ─── Footer ───────────────────────────────────────────────────────────────────
 st.markdown("---")
 st.markdown(
-    "<div style='text-align: center; color: #555; font-size: 12px;'>"
-    "GraphRAG Interface v3.1.0 | Powered by Microsoft GraphRAG + Ollama"
+    "<div style='text-align: center; color: #555; font-size: 12px; padding: 10px 0;'>"
+    "GraphRAG Interface v3.2.0 | Powered by Microsoft GraphRAG + Ollama"
     "</div>",
     unsafe_allow_html=True
 )
