@@ -2,6 +2,7 @@ import os
 import hashlib
 import json
 import subprocess
+import shutil
 import logging
 from pathlib import Path
 
@@ -25,11 +26,14 @@ class DocumentIndexManager:
 
     def get_status(self):
         """Get current indexing status"""
-        if not self.cache_file.exists():
-            return "No index found."
+        output_dir = Path("./ragtest/output")
+        has_index = output_dir.exists() and bool(list(output_dir.rglob("*.parquet")))
+        
+        if not has_index:
+            return "Nenhum índice encontrado. Faça upload e indexe documentos."
         if self.check_file_changes():
-            return "Changes detected. Re-indexing required."
-        return "Index exists and is up to date."
+            return "Alterações detectadas. Re-indexação necessária."
+        return "Índice existente e atualizado."
 
     def check_file_changes(self):
         """Check if any files have changed since last indexing"""
@@ -45,6 +49,79 @@ class DocumentIndexManager:
             if f.is_file() and self._get_file_hash(f) != cache.get(str(f)):
                 return True
         return False
+
+    def get_indexed_files(self):
+        """Return list of files in input directory with metadata"""
+        files = []
+        for f in sorted(self.input_dir.glob("*")):
+            if f.is_file():
+                try:
+                    size_kb = f.stat().st_size / 1024
+                    files.append({
+                        "name": f.name,
+                        "path": str(f),
+                        "size_kb": round(size_kb, 1),
+                        "modified": f.stat().st_mtime
+                    })
+                except Exception as e:
+                    files.append({
+                        "name": f.name,
+                        "path": str(f),
+                        "size_kb": 0,
+                        "error": str(e)
+                    })
+        return files
+
+    def delete_file(self, filename):
+        """Delete a file from the input directory"""
+        file_path = self.input_dir / filename
+        try:
+            if file_path.exists() and file_path.is_file():
+                file_path.unlink()
+                logger.info(f"File deleted: {filename}")
+                
+                # Also remove from ragtest/input if it exists there
+                ragtest_input = Path("ragtest/input") / filename
+                if ragtest_input.exists():
+                    ragtest_input.unlink()
+                    logger.info(f"Also removed from ragtest/input: {filename}")
+                
+                # Update cache
+                if self.cache_file.exists():
+                    try:
+                        cache = json.loads(self.cache_file.read_text())
+                        cache.pop(str(file_path), None)
+                        self.cache_file.write_text(json.dumps(cache))
+                    except Exception:
+                        pass
+                
+                return True, f"Arquivo '{filename}' excluído com sucesso."
+            else:
+                return False, f"Arquivo '{filename}' não encontrado."
+        except Exception as e:
+            logger.error(f"Error deleting file {filename}: {e}")
+            return False, f"Erro ao excluir '{filename}': {str(e)}"
+
+    def clear_index(self):
+        """Clear the current index (output files)"""
+        try:
+            output_dir = Path("./ragtest/output")
+            cache_dir = Path("./ragtest/cache")
+            
+            if output_dir.exists():
+                shutil.rmtree(output_dir)
+                logger.info("Output directory cleared")
+            if cache_dir.exists():
+                shutil.rmtree(cache_dir)
+                logger.info("Cache directory cleared")
+            if self.cache_file.exists():
+                self.cache_file.unlink()
+                logger.info("Index cache cleared")
+            
+            return True, "Índice limpo com sucesso. Re-indexação necessária."
+        except Exception as e:
+            logger.error(f"Error clearing index: {e}")
+            return False, f"Erro ao limpar índice: {str(e)}"
 
     def run_indexing(self):
         """Run graphrag indexing via CLI"""
@@ -62,8 +139,14 @@ class DocumentIndexManager:
             
             logger.info(f"Found {len(input_files)} files to index: {[f.name for f in input_files]}")
             
+            # Sync files to ragtest/input
+            ragtest_input = Path("ragtest/input")
+            ragtest_input.mkdir(parents=True, exist_ok=True)
+            for f in input_files:
+                if f.is_file():
+                    shutil.copy2(f, ragtest_input / f.name)
+            
             # Set up environment variables
-            import os
             os.environ['GRAPHRAG_LLM_MODEL'] = 'qwen3:8b'
             os.environ['GRAPHRAG_EMBEDDINGS_MODEL'] = 'nomic-embed-text'
             os.environ['GRAPHRAG_LLM_API_BASE'] = 'http://localhost:11434/v1'
@@ -88,15 +171,16 @@ class DocumentIndexManager:
                 logger.error(f"Indexing failed with code {result.returncode}")
                 return False
             
-            # Verify output was created
-            if list(Path("./output").rglob("*.parquet")):
+            # Verify output was created (corrigido: verificar ragtest/output)
+            output_dir = Path("./ragtest/output")
+            if output_dir.exists() and list(output_dir.rglob("*.parquet")):
                 logger.info("✅ Index criado com sucesso")
                 # Update cache
                 cache = {str(f): self._get_file_hash(f) for f in self.input_dir.glob("*") if f.is_file()}
                 self.cache_file.write_text(json.dumps(cache))
                 return True
             else:
-                logger.warning("Output directory not created")
+                logger.warning("Output directory not created or no parquet files found")
                 return False
                 
         except subprocess.TimeoutExpired:

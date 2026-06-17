@@ -29,16 +29,16 @@ class QueryEngine:
             env["GRAPHRAG_EMBEDDINGS_MODEL"] = "nomic-embed-text"
             env["GRAPHRAG_LLM_API_BASE"] = "http://localhost:11434/v1"
 
-            output_dir = Path("./output")
+            # Corrigido: verificar output dentro de ragtest (onde o index é gerado)
+            output_dir = Path("./ragtest/output")
 
-            parquet_files = list(output_dir.rglob("*.parquet"))
+            parquet_files = list(output_dir.rglob("*.parquet")) if output_dir.exists() else []
             if not parquet_files:
                 return {
                     "response": "❌ Índice não encontrado. Execute a indexação primeiro.",
                     "context": ""
                 }
 
-  
             cmd = [python_exe, "-m", "graphrag", "query", "--root", "ragtest", "--method", method, text]
 
             logger.info(f"Running query: {text}")
@@ -81,7 +81,7 @@ class QueryEngine:
 
         except subprocess.TimeoutExpired:
             return {
-                "response": "⏱️ Timeout da consulta",
+                "response": "⏱️ Timeout da consulta (limite de 2 minutos excedido)",
                 "context": ""
             }
 
