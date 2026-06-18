@@ -28,7 +28,7 @@ embedding_models:
 
 input:
   type: text # [csv, text, json, jsonl]
-  file_pattern: ".*\\.(txt|md)$"
+  file_pattern: ".*\\.(txt|md)$$"
 
 chunking:
   type: tokens
