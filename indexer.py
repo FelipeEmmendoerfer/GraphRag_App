@@ -128,66 +128,129 @@ class DocumentIndexManager:
         try:
             import sys
             python_exe = sys.executable
-            
+
             logger.info("Starting document indexing...")
-            
+
             # Verify input files exist
             input_files = list(self.input_dir.glob("*"))
             if not input_files:
                 logger.error("No input files found")
                 return False
-            
-            logger.info(f"Found {len(input_files)} files to index: {[f.name for f in input_files]}")
-            
+
+            logger.info(
+                f"Found {len(input_files)} files to index: "
+                f"{[f.name for f in input_files]}"
+            )
+
             # Sync files to ragtest/input
             ragtest_input = Path("ragtest/input")
             ragtest_input.mkdir(parents=True, exist_ok=True)
+
+            # Limpa arquivos antigos
+            for old_file in ragtest_input.glob("*"):
+                if old_file.is_file():
+                    old_file.unlink()
+
             for f in input_files:
-                if f.is_file():
+                if not f.is_file():
+                    continue
+
+                # TXT
+                if f.suffix.lower() == ".txt":
                     shutil.copy2(f, ragtest_input / f.name)
-            
+                    logger.info(f"TXT copiado: {f.name}")
+
+                # Markdown
+                elif f.suffix.lower() == ".md":
+                    conteudo = f.read_text(
+                        encoding="utf-8",
+                        errors="ignore"
+                    )
+
+                    destino = ragtest_input / f"{f.stem}.txt"
+
+                    destino.write_text(
+                        conteudo,
+                        encoding="utf-8"
+                    )
+
+                    logger.info(
+                        f"Markdown convertido: "
+                        f"{f.name} -> {destino.name}"
+                    )
+
             # Set up environment variables
-            os.environ['GRAPHRAG_LLM_MODEL'] = 'qwen3:8b'
-            os.environ['GRAPHRAG_EMBEDDINGS_MODEL'] = 'nomic-embed-text'
-            os.environ['GRAPHRAG_LLM_API_BASE'] = 'http://localhost:11434/v1'
-            
+            os.environ["GRAPHRAG_LLM_MODEL"] = "qwen3:8b"
+            os.environ["GRAPHRAG_EMBEDDINGS_MODEL"] = "nomic-embed-text"
+            os.environ["GRAPHRAG_LLM_API_BASE"] = "http://localhost:11434/v1"
+
             # Run indexing via CLI
-            cmd = [python_exe, "-m", "graphrag", "index", "--root", "ragtest"]
+            cmd = [
+                python_exe,
+                "-m",
+                "graphrag",
+                "index",
+                "--root",
+                "ragtest"
+            ]
+
             logger.info(f"Running: {' '.join(cmd)}")
-            
+
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=600,  # 10 minutes
+                timeout=600,
                 cwd=str(self.input_dir.parent)
             )
-            
+
             if result.stdout:
-                logger.info(f"Output: {result.stdout[:500]}")
+                logger.info(result.stdout)
+
             if result.stderr:
                 logger.warning(result.stderr)
+
             if result.returncode != 0:
-                logger.error(f"Indexing failed with code {result.returncode}")
+                logger.error(
+                    f"Indexing failed with code "
+                    f"{result.returncode}"
+                )
                 return False
-            
-            # Verify output was created (corrigido: verificar ragtest/output)
+
+            # Verify output was created
             output_dir = Path("./ragtest/output")
+
             if output_dir.exists() and list(output_dir.rglob("*.parquet")):
                 logger.info("✅ Index criado com sucesso")
-                # Update cache
-                cache = {str(f): self._get_file_hash(f) for f in self.input_dir.glob("*") if f.is_file()}
-                self.cache_file.write_text(json.dumps(cache))
+
+                cache = {
+                    str(f): self._get_file_hash(f)
+                    for f in self.input_dir.glob("*")
+                    if f.is_file()
+                }
+
+                self.cache_file.write_text(
+                    json.dumps(cache)
+                )
+
                 return True
-            else:
-                logger.warning("Output directory not created or no parquet files found")
-                return False
-                
-        except subprocess.TimeoutExpired:
-            logger.error("Indexing timed out after 10 minutes")
+
+            logger.warning(
+                "Output directory not created "
+                "or no parquet files found"
+            )
             return False
+
+        except subprocess.TimeoutExpired:
+            logger.error(
+                "Indexing timed out after 10 minutes"
+            )
+            return False
+
         except Exception as e:
             logger.error(f"Indexing failed: {e}")
+
             import traceback
             logger.error(traceback.format_exc())
+
             return False

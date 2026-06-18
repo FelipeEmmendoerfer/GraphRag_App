@@ -1,0 +1,127 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 700px;
+                 background-color: #0f0f1a;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": {"background": "#f093fb", "border": "#f093fb", "highlight": {"background": "#ffffff", "border": "#f093fb"}}, "font": {"color": "#e2e8f0"}, "id": "8089a374-8a00-4e1c-8702-c410de60c30e", "label": "PAI RICO, PAI POBRE", "shape": "dot", "size": 10.0, "title": "\u003cb\u003ePAI RICO, PAI POBRE\u003c/b\u003e\u003cbr\u003eTipo: ORGANIZATION\u003cbr\u003eConexoes: 0\u003cbr\u003e\u003cbr\u003eThe book by Robert Kiyosaki that explores financial concepts like assets vs. liabilities, emotional intelligence, and wealth-building strategies"}, {"color": {"background": "#bee3f8", "border": "#bee3f8", "highlight": {"background": "#ffffff", "border": "#bee3f8"}}, "font": {"color": "#e2e8f0"}, "id": "fd038289-4f75-4dfe-907a-f62579dcd715", "label": "ROBERT KIYOSAKI", "shape": "dot", "size": 10.0, "title": "\u003cb\u003eROBERT KIYOSAKI\u003c/b\u003e\u003cbr\u003eTipo: PERSON\u003cbr\u003eConexoes: 0\u003cbr\u003e\u003cbr\u003eThe author of *Pai Rico, Pai Pobre*, known for his teachings on financial literacy, assets, and the difference between passive and active income"}, {"color": {"background": "#bee3f8", "border": "#bee3f8", "highlight": {"background": "#ffffff", "border": "#bee3f8"}}, "font": {"color": "#e2e8f0"}, "id": "05c7ec5e-165f-4816-913d-9ee8c6f3fdd1", "label": "BUCKMINSTER FULLER", "shape": "dot", "size": 10.0, "title": "\u003cb\u003eBUCKMINSTER FULLER\u003c/b\u003e\u003cbr\u003eTipo: PERSON\u003cbr\u003eConexoes: 0\u003cbr\u003e\u003cbr\u003eBUCKMINSTER FULLER is a philosopher and thinker referenced for his profound insights on wealth, financial survival, and the role of money in achieving personal and societal goals. He is cited in the t"}, {"color": {"background": "#bee3f8", "border": "#bee3f8", "highlight": {"background": "#ffffff", "border": "#bee3f8"}}, "font": {"color": "#e2e8f0"}, "id": "9320e70b-26a4-4ac8-9dc2-77675fde79ba", "label": "PAI RICO", "shape": "dot", "size": 10.0, "title": "\u003cb\u003ePAI RICO\u003c/b\u003e\u003cbr\u003eTipo: PERSON\u003cbr\u003eConexoes: 0\u003cbr\u003e\u003cbr\u003eA fictional character in *Pai Rico, Pai Pobre* representing the \"rich dad\" who prioritizes financial education and asset ownership"}, {"color": {"background": "#bee3f8", "border": "#bee3f8", "highlight": {"background": "#ffffff", "border": "#bee3f8"}}, "font": {"color": "#e2e8f0"}, "id": "cad72fef-baed-4e76-b286-2103f1ddfb4d", "label": "PAI POBRE", "shape": "dot", "size": 10.0, "title": "\u003cb\u003ePAI POBRE\u003c/b\u003e\u003cbr\u003eTipo: PERSON\u003cbr\u003eConexoes: 0\u003cbr\u003e\u003cbr\u003eA fictional character in *Pai Rico, Pai Pobre* representing the \"poor dad,\" contrasting with the rich dad by emphasizing passive income and financial ignorance"}, {"color": {"background": "#f093fb", "border": "#f093fb", "highlight": {"background": "#ffffff", "border": "#f093fb"}}, "font": {"color": "#e2e8f0"}, "id": "f2b394c6-13a5-4353-82d4-c24a76c81575", "label": "ASSET", "shape": "dot", "size": 10.0, "title": "\u003cb\u003eASSET\u003c/b\u003e\u003cbr\u003eTipo: ORGANIZATION\u003cbr\u003eConexoes: 0\u003cbr\u003e\u003cbr\u003eA financial concept discussed in the text, referring to resources that generate income (e.g., investments, rental properties, intellectual property)"}, {"color": {"background": "#f093fb", "border": "#f093fb", "highlight": {"background": "#ffffff", "border": "#f093fb"}}, "font": {"color": "#e2e8f0"}, "id": "3c73ba4a-976c-44fa-938b-c73095ca19cc", "label": "LIABILITY", "shape": "dot", "size": 10.0, "title": "\u003cb\u003eLIABILITY\u003c/b\u003e\u003cbr\u003eTipo: ORGANIZATION\u003cbr\u003eConexoes: 0\u003cbr\u003e\u003cbr\u003eA financial concept discussed in the text, referring to expenses that drain income (e.g., mortgages, car loans, credit card debt)"}, {"color": {"background": "#f093fb", "border": "#f093fb", "highlight": {"background": "#ffffff", "border": "#f093fb"}}, "font": {"color": "#e2e8f0"}, "id": "a36bf21c-cf5b-4e50-9431-0f061a7a9098", "label": "FINANCIAL EDUCATION", "shape": "dot", "size": 10.0, "title": "\u003cb\u003eFINANCIAL EDUCATION\u003c/b\u003e\u003cbr\u003eTipo: ORGANIZATION\u003cbr\u003eConexoes: 0\u003cbr\u003e\u003cbr\u003eA central theme of *Pai Rico, Pai Pobre*, emphasizing the importance of learning about money, assets, and passive income generation"}, {"color": {"background": "#bee3f8", "border": "#bee3f8", "highlight": {"background": "#ffffff", "border": "#bee3f8"}}, "font": {"color": "#e2e8f0"}, "id": "87936ab0-eb90-4159-afb9-ab5026c4fc58", "label": "ROBERT", "shape": "dot", "size": 10.0, "title": "\u003cb\u003eROBERT\u003c/b\u003e\u003cbr\u003eTipo: PERSON\u003cbr\u003eConexoes: 0\u003cbr\u003e\u003cbr\u003eRobert is a person who discusses financial literacy and the importance of investing in assets to generate passive income, emphasizing that money should work for individuals rather than individuals wor"}, {"color": {"background": "#68d391", "border": "#68d391", "highlight": {"background": "#ffffff", "border": "#68d391"}}, "font": {"color": "#e2e8f0"}, "id": "d64c7fbb-a30c-40f8-86eb-6810f7525bd2", "label": "FINANCIAL LITERACY", "shape": "dot", "size": 10.0, "title": "\u003cb\u003eFINANCIAL LITERACY\u003c/b\u003e\u003cbr\u003eTipo: EVENT\u003cbr\u003eConexoes: 0\u003cbr\u003e\u003cbr\u003eAn event or concept discussed in the text that refers to the education and understanding of financial management, including how to manage money effectively and create wealth through assets"}]);
+                  edges = new vis.DataSet([]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"physics": {"enabled": true, "forceAtlas2Based": {"gravitationalConstant": -80, "centralGravity": 0.01, "springLength": 120, "springConstant": 0.08, "damping": 0.4, "avoidOverlap": 0.8}, "solver": "forceAtlas2Based", "stabilization": {"enabled": true, "iterations": 200, "updateInterval": 25}}, "nodes": {"font": {"size": 12, "color": "#e2e8f0", "face": "Inter,sans-serif"}, "borderWidth": 2, "borderWidthSelected": 4, "shadow": {"enabled": true, "color": "rgba(102,126,234,0.3)", "size": 10}}, "edges": {"color": {"color": "rgba(102,126,234,0.4)", "highlight": "#667eea", "hover": "#764ba2"}, "smooth": {"enabled": true, "type": "continuous"}, "width": 1.5}, "interaction": {"hover": true, "tooltipDelay": 200, "navigationButtons": true, "keyboard": {"enabled": true}, "zoomView": true, "dragView": true}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
