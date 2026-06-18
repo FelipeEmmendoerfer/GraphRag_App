@@ -16,7 +16,7 @@ A abordagem do GraphRAG vai além do RAG tradicional (baseado apenas em similari
 
 | Funcionalidade | Descrição |
 |---|---|
-| Upload de Documentos | Suporte para arquivos `.txt` e `.md` (Markdown) |
+| Upload de Documentos | Suporte para arquivos `.txt` |
 | Indexação com GraphRAG | Extração automática de entidades, relacionamentos e comunidades |
 | Chat com 4 Métodos de Busca | Local, Global, Drift e Basic |
 | Visualização Interativa do Grafo | Estilo Gephi com Force Atlas 2 via Pyvis |
@@ -135,7 +135,7 @@ A interface estará disponível em: `http://localhost:8501`
 
 ### 3. Fluxo de trabalho
 
-1. **Configuração** — Faça upload de arquivos `.txt` ou `.md` com o conteúdo que deseja analisar
+1. **Configuração** — Faça upload de arquivos `.txt` com o conteúdo que deseja analisar
 2. **Indexar** — Clique em "Indexar Documentos" e aguarde o processamento
 3. **Chat** — Faça perguntas sobre o conteúdo dos documentos
 4. **Grafo** — Explore visualmente as entidades e relacionamentos extraídos
@@ -225,7 +225,7 @@ O tempo de indexação depende diretamente da capacidade da sua GPU/CPU e do mod
 
 ### Formato dos documentos
 
-O sistema aceita apenas `.txt` e `.md` por design. Esses formatos garantem que o texto chegue limpo ao LLM, sem artefatos de formatação (como cabeçalhos PDF, metadados DOCX, etc.) que podem confundir modelos locais menores. Se você tem documentos em outros formatos, converta-os para texto puro antes de fazer upload.
+O sistema aceita apenas `.txt` por design. Esses formatos garantem que o texto chegue limpo ao LLM, sem artefatos de formatação (como cabeçalhos PDF, metadados DOCX, etc.) que podem confundir modelos locais menores. Se você tem documentos em outros formatos, converta-os para texto puro antes de fazer upload.
 
 ### Dicas para melhores resultados
 
@@ -246,7 +246,7 @@ GraphRag_App/
 ├── graph_visualizer.py       # Extrator de dados do grafo para visualização
 ├── verify.py                 # Script de verificação do ambiente
 ├── requirements.txt          # Dependências Python
-├── input/                    # Documentos para análise (.txt, .md)
+├── input/                    # Documentos para análise (.txt)
 └── ragtest/                  # Diretório raiz do GraphRAG
     ├── settings.yaml         # Configuração do pipeline
     ├── input/                # Cópia dos documentos para indexação
