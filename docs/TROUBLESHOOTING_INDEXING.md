@@ -44,7 +44,7 @@ Se tiver erro, copie e cole a mensagem aqui.
 
 #### 5️⃣ Verificar se settings.yaml está correto
 
-O arquivo `settings.yaml` deve estar na raiz do projeto.
+O arquivo `ragtest/settings.yaml` (raiz do GraphRAG, usada com `--root ragtest`) é a única configuração do pipeline.
 
 ## Problema: Busca não retorna resultados
 
@@ -90,7 +90,7 @@ def query(self, text, method='local'):
 - [ ] Ollama rodando (`ollama serve`)
 - [ ] Modelo baixado (`ollama list` mostra qwen2:8b)
 - [ ] Arquivo em `input/`
-- [ ] `settings.yaml` existe
+- [ ] `ragtest/settings.yaml` existe
 - [ ] Botão "Indexar Agora" clicado
 - [ ] Pasta `output/` criada com conteúdo
 - [ ] Teste manual de busca funciona

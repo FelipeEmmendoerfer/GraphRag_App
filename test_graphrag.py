@@ -85,11 +85,11 @@ def check_input_files():
 
 def check_settings():
     """Check settings.yaml"""
-    print_header("5. Verificando settings.yaml")
-    settings_file = Path("settings.yaml")
+    print_header("5. Verificando ragtest/settings.yaml")
+    settings_file = Path("ragtest/settings.yaml")
     
     if settings_file.exists():
-        print("✅ settings.yaml encontrado")
+        print("✅ ragtest/settings.yaml encontrado")
         with open(settings_file) as f:
             content = f.read()
             if 'ollama' in content.lower():
@@ -98,7 +98,7 @@ def check_settings():
                 print("   ⚠️ Não está configurado para Ollama")
         return True
     else:
-        print("❌ settings.yaml não encontrado")
+        print("❌ ragtest/settings.yaml não encontrado")
         return False
 
 def check_graphrag_modules():
