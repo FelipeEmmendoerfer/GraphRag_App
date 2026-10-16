@@ -246,6 +246,7 @@ GraphRag_App/
 ├── graph_visualizer.py       # Extrator de dados do grafo para visualização
 ├── verify.py                 # Script de verificação do ambiente
 ├── requirements.txt          # Dependências Python
+├── docs/                     # Documentação complementar (guias, troubleshooting, histórico de correções)
 ├── input/                    # Documentos para análise (.txt)
 └── ragtest/                  # Diretório raiz do GraphRAG
     ├── settings.yaml         # Configuração do pipeline
@@ -392,6 +393,15 @@ MIT License — veja [LICENSE.md](LICENSE.md)
 ---
 
 ## Recursos e Referências
+
+Documentação complementar do projeto (pasta [`docs/`](docs/)):
+
+- [Guia rápido](docs/QUICKSTART.md)
+- [Troubleshooting da indexação](docs/TROUBLESHOOTING_INDEXING.md)
+- [Guia de push para o GitHub](docs/GITHUB_PUSH_GUIDE.md)
+- [Correções realizadas](docs/CORRECTIONS.md) e [correções aplicadas](docs/FIXES_APPLIED.md)
+
+Referências externas:
 
 - [Microsoft GraphRAG — Documentação Oficial](https://microsoft.github.io/graphrag/)
 - [Streamlit — Documentação](https://docs.streamlit.io/)

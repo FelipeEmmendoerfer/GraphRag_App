@@ -85,7 +85,7 @@ meu_projeto/
 ├── output/                  ← Resultados aqui 📊
 ├── ragtest/                 ← Config RAG
 ├── README.md                ← Documentação completa
-└── CORRECTIONS.md           ← Correções feitas
+└── docs/                    ← Guias e histórico de correções
 ```
 
 ## 💡 Dicas
