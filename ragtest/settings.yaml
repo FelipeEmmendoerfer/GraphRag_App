@@ -8,7 +8,7 @@ completion_models:
   default_completion_model:
     model_provider: ollama
     model: qwen3:8b
-    temperature: 0.7
+    temperature: 0
     max_tokens: 2000
     api_base: http://localhost:11434
     auth_method: api_key
@@ -18,7 +18,7 @@ embedding_models:
   default_embedding_model:
     model_provider: ollama
     model: nomic-embed-text
-    temperature: 0.7
+    temperature: 0
     max_tokens: 2000
     api_base: http://localhost:11434
     auth_method: api_key
