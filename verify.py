@@ -66,7 +66,7 @@ def check_env():
 
     # Config Files
     print("\n--- Configuration ---")
-    for config_file in ["settings.yaml", "ragtest/settings.yaml"]:
+    for config_file in ["ragtest/settings.yaml"]:
         exists = os.path.exists(config_file)
         print_status(f"File '{config_file}'", "OK" if exists else "MISSING")
     

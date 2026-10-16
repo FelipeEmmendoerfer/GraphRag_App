@@ -79,11 +79,10 @@ meu_projeto/
 ├── engine.py                ← Motor de busca
 ├── indexer.py               ← Indexação
 ├── verify.py                ← Verificação
-├── settings.yaml            ← Configuração
 ├── requirements.txt         ← Dependências
 ├── input/                   ← Seus documentos aqui 📄
 ├── output/                  ← Resultados aqui 📊
-├── ragtest/                 ← Config RAG
+├── ragtest/                 ← Raiz do GraphRAG (settings.yaml)
 ├── README.md                ← Documentação completa
 └── docs/                    ← Guias e histórico de correções
 ```
@@ -102,7 +101,7 @@ meu_projeto/
 Depois de começar, você pode:
 - Adicionar mais documentos
 - Testar diferentes modelos  
-- Ajustar `settings.yaml`
+- Ajustar `ragtest/settings.yaml`
 - Explorar diferentes métodos de busca
 
 ## 📖 Recursos Úteis
